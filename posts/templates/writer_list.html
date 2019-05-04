@@ -1,0 +1,21 @@
+{% extends "base_template.html" %}
+
+{% block content %}
+
+
+    <h1>Writers List</h1>
+
+    <ul>
+
+      {% for writer in writer_list %}
+        <div >
+            <h3>نویسنده  :<a href=""> {{ writer.last_name}} </a></h3>
+            <p>نام : {{ writer.first_name}} </p>
+            <p>تاریخ تولد : {{writer.birthDay}}   </p>
+            <hr />
+        </div>
+      {% endfor %}
+
+    </ul>
+       
+{% endblock %}

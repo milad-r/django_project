@@ -1,0 +1,14 @@
+
+{% extends "base_template.html" %}
+
+{% block content %}
+  <h1>Title: {{ post.title }}</h1>
+
+  <p><strong>writer:</strong> <a href="">{{ post.writer }}</a></p> <!-- author detail link not yet defined -->
+  <p><strong>title:</strong> {{ post.title }}</p>
+  <p><strong>body:</strong> {{ post.body }}</p> 
+  <p><strong>time:</strong> {{ post.timestamp }}</p>  
+  <p><strong>assortment:</strong> {% for genre in post.assortment.all %} {{ assortment }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>  
+
+
+{% endblock %}

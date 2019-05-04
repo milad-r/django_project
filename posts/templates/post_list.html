@@ -1,0 +1,16 @@
+{% extends "base_template.html" %}
+
+{% block content %}
+
+
+    <h1>Post List</h1>
+      {% for post in post_list %}
+        <h3>
+        <a href="{{post.get_absolute_url}}">{{post.title}} </a></h3> 
+        <p> <strong>نویسنده : </strong>{{post.writer}} </p>
+        <p> <strong>تاریخ انتشار :</strong> {{post.timestamp}} </p>
+        <hr/>
+      {% endfor %}
+    </ul>
+       
+{% endblock %}

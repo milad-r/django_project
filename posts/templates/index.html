@@ -1,0 +1,16 @@
+{% extends "base_template.html" %}
+
+{% block content %}
+<h1>QC webiste</h1>
+
+  <p>Welcome to <em>QC website</em>, a very basic Django website </p>
+
+<h2>Dynamic content</h2>
+
+  <p>The webiste has the following record counts:</p>
+  <ul>
+    <li><strong> <a href="{% url 'posts:post_list' %}">posts:</a></strong> {{ posts }}</li>
+    <li><strong><a href=''>writers:</a></strong> {{ authors }}</li>
+  </ul>
+
+{% endblock %}
