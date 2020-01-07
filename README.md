@@ -1,2 +1,2 @@
 # django_project
-a library project in django
+a chat project in django
