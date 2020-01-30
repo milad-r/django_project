@@ -18,3 +18,4 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE , primary_key=True)
     profile_image = models.ImageField(upload_to='images/profileimages', null=True)
 
+new 
