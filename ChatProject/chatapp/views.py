@@ -1,6 +1,6 @@
 from django.shortcuts import render , redirect
 from django.http import HttpResponse , JsonResponse 
-from rest_framework.parsers import JSONParser 
+from rest_framework.parsers import JSONParser , MultiPartParser
 from .serializers import UserSerializer , MessageSerializer 
 from .models import Message , User
 from itertools import chain
@@ -19,7 +19,12 @@ def index(request):
     else:
         return redirect('login')
 
-def Messages(request , sender=None ,receiver=None):
+@api_view(['POST'])
+@parser_classes([JSONParser])
+def Messages(request):
+    data = request.data
+    sender = data['sender']
+    receiver= data['receiver']
     messages1 = Message.objects.filter(sender = sender , receiver = receiver)
     messages2 = Message.objects.filter(sender =receiver , receiver=sender)
     messages  = list(chain(messages1 , messages2))
@@ -58,7 +63,7 @@ def Register(request):
         response = api.verify_lookup(params)
         print(response)
 
-        return JsonResponse({'token':token ,'number':ressponse['receptor']})
+        return JsonResponse({'token':token ,'number':response['receptor']})
     except APIException as e: 
             return JsonResponse(str(e))
     except Exception as e: 
@@ -67,21 +72,38 @@ def Register(request):
 @api_view(['POST'])
 @parser_classes([JSONParser])
 def Login(request):
-    data = request.data
-    serializer = UserSerializer(data=data)
-    if serializer.is_valid():
-        p = serializer.validated_data['phone_number']
-        try :
-            user = User.objects.get(phone_number=p)
-            srializer = UserSerializer(user)
-            return JsonResponse(srializer.data, status=201)
-        except User.DoesNotExist :    
+    data = request.data  
+    try :
+        p = data['phone_number']
+        user = User.objects.get(phone_number=p)
+        srializer = UserSerializer(user)
+        return JsonResponse(srializer.data, status=201)
+    except User.DoesNotExist :
+        serializer = UserSerializer(data=data)
+        if serializer.is_valid():    
             serializer.save()
             return JsonResponse(serializer.data, status=201)
-    return JsonResponse(serializer.errors, status=400)
+        return JsonResponse(serializer.errors, status=400)
 
+@api_view(['POST'])
+@parser_classes([JSONParser , MultiPartParser])
+def SetProfile(request):
+    data = request.data
+    #return HttpResponse(request.data['username'])
+    #user = data.get('username')
+    user = request.POST['username']
+    image = request.FILES['image']
+    #return HttpResponse(user)
+    user = User.objects.get(username=user)
+    user.profile_image = image
+    user.save()
+    return render(request,'messageform.html',{'image':image})
+    return JsonResponse({'success':True})
 
+@api_view(['POST'])
+@parser_classes([JSONParser])
 def users(request):
-    users = User.objects.all()
+    user = request.data['username']
+    users = User.objects.exclude(username=user)
     serializer = UserSerializer(users, many=True ,)
     return JsonResponse(serializer.data , safe=False)
