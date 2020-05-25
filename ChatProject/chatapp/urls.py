@@ -9,6 +9,9 @@ urlpatterns = [
     path('register/', views.Register , name='register'),
     path('login/', views.Login , name='login'),
     path('setprofile', views.SetProfile , name="setprofile"),
+    path('set_reg-google' , views.Set_Reg ),
+    path('set_read', views.Set_Read  ),
+    path('profile', views.Profile  ),
 
 ]
 

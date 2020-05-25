@@ -1,13 +1,13 @@
 from django.shortcuts import render , redirect
-from django.http import HttpResponse , JsonResponse 
+from django.http import HttpResponse , JsonResponse
 from rest_framework.parsers import JSONParser , MultiPartParser
-from .serializers import UserSerializer , MessageSerializer 
+from .serializers import UserSerializer , MessageSerializer , ProfileSerializer
 from .models import Message , User
 from itertools import chain
 import operator
 from rest_framework.decorators import api_view
 from rest_framework.decorators import parser_classes
-from django.views.decorators.csrf import csrf_exempt 
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.exceptions import APIException
 from kavenegar import *
 from random import randint
@@ -44,7 +44,7 @@ def message_view(request):
     serializer = MessageSerializer(data=data)
     if serializer.is_valid():
         serializer.save()
-        return JsonResponse(serializer.data, status=201)    
+        return JsonResponse(serializer.data , status=201)
     return JsonResponse(serializer.errors, status=400)
 
 
@@ -53,26 +53,30 @@ def message_view(request):
 def Register(request):
     data = request.data
     token = randint(100000, 999999)
+    print(token)
     try:
         api = KavenegarAPI('4872465463763051536E44756259536567304F4449777257384A565455356567456A6C30476B4B6D6D304D3D')
-        params = {
-            'receptor': data['phone_number'] ,
-            'token' : token ,
-            'template': 'verify',
-        }   
-        response = api.verify_lookup(params)
-        print(response)
-
-        return JsonResponse({'token':token ,'number':response['receptor']})
-    except APIException as e: 
-            return JsonResponse(str(e))
-    except Exception as e: 
-            return JsonResponse(str(e))
+        # params = {
+        #     'receptor': data['phone_number'] ,
+        #     'token' : token ,
+        #     'template': 'verify',
+        # }
+        # response = api.verify_lookup(params)
+        # print(response)
+        try :
+            user = User.objects.get(phone_number=data['phone_number'])
+            return JsonResponse({'token':token ,'number':data['phone_number'],'username':user.username})
+        except User.DoesNotExist:
+            return JsonResponse({'token':token ,'number':data['phone_number']})
+    except APIException as e:
+            return JsonResponse(str(e),safe=False)
+    except Exception as e:
+            return JsonResponse(str(e),safe=False)
 
 @api_view(['POST'])
 @parser_classes([JSONParser])
 def Login(request):
-    data = request.data  
+    data = request.data
     try :
         p = data['phone_number']
         user = User.objects.get(phone_number=p)
@@ -80,7 +84,7 @@ def Login(request):
         return JsonResponse(srializer.data, status=201)
     except User.DoesNotExist :
         serializer = UserSerializer(data=data)
-        if serializer.is_valid():    
+        if serializer.is_valid():
             serializer.save()
             return JsonResponse(serializer.data, status=201)
         return JsonResponse(serializer.errors, status=400)
@@ -91,13 +95,13 @@ def SetProfile(request):
     data = request.data
     #return HttpResponse(request.data['username'])
     #user = data.get('username')
-    user = request.POST['username']
-    image = request.FILES['image']
+    user = request.POST.get('username')
+    image = request.FILES.get('image')
     #return HttpResponse(user)
     user = User.objects.get(username=user)
     user.profile_image = image
     user.save()
-    return render(request,'messageform.html',{'image':image})
+    #return render(request,'messageform.html',{'image':image})
     return JsonResponse({'success':True})
 
 @api_view(['POST'])
@@ -107,3 +111,40 @@ def users(request):
     users = User.objects.exclude(username=user)
     serializer = UserSerializer(users, many=True ,)
     return JsonResponse(serializer.data , safe=False)
+
+
+@api_view(['POST'])
+@parser_classes([JSONParser])
+def Set_Reg(request):
+    user = request.data['username']
+    reg = request.data['reg_google']
+    user = User.objects.get(username=user)
+    user.reg_google = reg
+    user.save()
+    return JsonResponse({'success':True})
+
+
+@api_view(['POST'])
+@parser_classes([JSONParser])
+def Set_Read(request):
+    messages = request.data['messages']
+    for msg in messages:
+        m = msg
+        id = messages[m]
+        message = Message.objects.get(id=id)
+        message.is_read = True
+        message.save()
+    return JsonResponse({'success':True})
+
+
+@api_view(['POST'])
+@parser_classes([JSONParser])
+def Profile(request):
+    user = request.data['username']
+    user = User.objects.get(username=user)
+    image=user.profile_image
+    ser = ProfileSerializer(data=image.url)
+    if ser.is_valid():
+
+        return JsonResponse(ser.data , status=201)
+    return JsonResponse(ser.errors , status=400)
