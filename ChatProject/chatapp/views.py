@@ -33,6 +33,12 @@ def Messages(request):
     return JsonResponse(serializer.data, json_dumps_params={'ensure_ascii': False}, safe=False)
 
 
+from firebase_admin import messaging , initialize_app
+
+initialize_app()
+
+# import os
+# os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="/path/to/file.json"
 
 @api_view(['POST'])
 @parser_classes([JSONParser])
@@ -44,6 +50,16 @@ def message_view(request):
     serializer = MessageSerializer(data=data)
     if serializer.is_valid():
         serializer.save()
+        registration_token = serializer.data['reg_google']
+        message = messaging.Message(
+            data={
+                'title': serializer.data['sender'],
+                'message': serializer.data['message'] ,
+            },
+            token = registration_token ,
+        )
+        response = messaging.send(message)
+        print('Successfully sent message:', response)
         return JsonResponse(serializer.data , status=201)
     return JsonResponse(serializer.errors, status=400)
 
@@ -53,7 +69,7 @@ def message_view(request):
 def Register(request):
     data = request.data
     token = randint(100000, 999999)
-    print(token)
+    print('token:' , token)
     try:
         api = KavenegarAPI('4872465463763051536E44756259536567304F4449777257384A565455356567456A6C30476B4B6D6D304D3D')
         # params = {
@@ -118,10 +134,14 @@ def users(request):
 def Set_Reg(request):
     user = request.data['username']
     reg = request.data['reg_google']
-    user = User.objects.get(username=user)
-    user.reg_google = reg
-    user.save()
-    return JsonResponse({'success':True})
+    try:
+        user = User.objects.get(username=user)
+        user.reg_google = reg
+        user.save()
+        return JsonResponse({'success':True})
+    except User.DoesNotExist:
+        return JsonResponse({'success':False , 'reason':'no_user'})
+    
 
 
 @api_view(['POST'])
