@@ -33,12 +33,7 @@ def Messages(request):
     return JsonResponse(serializer.data, json_dumps_params={'ensure_ascii': False}, safe=False)
 
 
-from firebase_admin import messaging , initialize_app
-
-initialize_app()
-
-# import os
-# os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="/path/to/file.json"
+import requests
 
 @api_view(['POST'])
 @parser_classes([JSONParser])
@@ -50,17 +45,26 @@ def message_view(request):
     serializer = MessageSerializer(data=data)
     if serializer.is_valid():
         serializer.save()
-        registration_token = serializer.data['reg_google']
-        message = messaging.Message(
-            data={
-                'title': serializer.data['sender'],
-                'message': serializer.data['message'] ,
-            },
-            token = registration_token ,
-        )
-        response = messaging.send(message)
+        registration_token = request.data['reg_google']
+        title=   serializer.data['sender']
+        message =  serializer.data['message'] 
+        url = "https://fcm.googleapis.com/fcm/send"
+        payload = "{\r\n    \"registration_ids\" : [\r\n        \"%s\"\r\n        \r\n    ],\r\n   \"data\" : {\r\n       \"title\" : \"%s\",\r\n       \"message\" : \"%s\" \r\n   }\r\n}"% (registration_token , title , message)
+        receiver = serializer.data['receiver']
+        print(payload)
+        receiver = User.objects.get(username = receiver)
+        receiver.reg_google = registration_token
+        receiver.save()
+        headers = {
+        'Authorization': 'key=AAAAY7xoWZ4:APA91bGLwcmRWkGc1zGClzHc83ER6KbfpH2D8d2ZB1hkoXGRcyrKK8SvxYW2AkQJvT-JfQEimTIJreNlD7_6rWN0VdXlMQjLdjD5d0gqODqW059cDQCrAybsHgVe6I5IL-n46Qzg-8HM',
+        'Content-Type': 'application/json'
+        }
+        response = requests.request("POST", url, headers=headers, data = payload)
+        response = response.text.encode('utf8')
         print('Successfully sent message:', response)
-        return JsonResponse(serializer.data , status=201)
+        data = serializer.data
+        data ['reg_google'] = registration_token
+        return JsonResponse(data , status=201)
     return JsonResponse(serializer.errors, status=400)
 
 

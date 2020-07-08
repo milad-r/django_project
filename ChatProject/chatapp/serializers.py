@@ -2,13 +2,14 @@ from rest_framework import serializers
 from .models import Message , User
 
 class MessageSerializer(serializers.ModelSerializer):
-    reg_google = serializers.StringRelatedField(source='receiver.reg_google',read_only=True)
+    # reg_google = serializers.StringRelatedField(source='receiver.reg_google')
     class Meta:
         model  = Message
-        fields = ['sender','receiver' ,'message','reg_google','id']
+        fields = ['sender','receiver' ,'message','id']
     
     def create(self, validated_data):
-        return Message.objects.create(**validated_data)    
+        msg =Message.objects.create(**validated_data)
+        return msg
      
 
 class UserSerializer(serializers.ModelSerializer):
