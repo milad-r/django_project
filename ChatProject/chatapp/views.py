@@ -49,9 +49,8 @@ def message_view(request):
         title=   serializer.data['sender']
         message =  serializer.data['message'] 
         url = "https://fcm.googleapis.com/fcm/send"
-        payload = "{\r\n    \"registration_ids\" : [\r\n        \"%s\"\r\n        \r\n    ],\r\n   \"data\" : {\r\n       \"title\" : \"%s\",\r\n       \"message\" : \"%s\" \r\n   }\r\n}"% (registration_token , title , message)
+        payload = "{\r\n    \"registration_ids\" : [\r\n       \"%s\" \r\n        \r\n    ],\r\n   \"data\" : {\r\n       \"title\" : \"%s\",\r\n       \"message\" : \"%s\" \r\n   }\r\n}"% (registration_token , title , message)
         receiver = serializer.data['receiver']
-        print(payload)
         receiver = User.objects.get(username = receiver)
         receiver.reg_google = registration_token
         receiver.save()
@@ -61,6 +60,11 @@ def message_view(request):
         }
         response = requests.request("POST", url, headers=headers, data = payload)
         response = response.text.encode('utf8')
+        import json
+        response = json.loads(response)
+        if response["success"] != 1:
+            print(response)
+            return JsonResponse({'error': response },safe=False)
         print('Successfully sent message:', response)
         data = serializer.data
         data ['reg_google'] = registration_token
