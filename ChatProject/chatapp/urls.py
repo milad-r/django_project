@@ -6,6 +6,7 @@ urlpatterns = [
     path('users/', views.users , name="user_list"),
     path('messages/', views.Messages, name="messages"),
     path('send-message/' , views.message_view ),
+    path('seen/' , views.Seen , name= 'seen' ),
     path('register/', views.Register , name='register'),
     path('login/', views.Login , name='login'),
     path('setprofile', views.SetProfile , name="setprofile"),

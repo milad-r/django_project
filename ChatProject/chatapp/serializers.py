@@ -2,10 +2,10 @@ from rest_framework import serializers
 from .models import Message , User
 
 class MessageSerializer(serializers.ModelSerializer):
-    # reg_google = serializers.StringRelatedField(source='receiver.reg_google')
+    timestamp = serializers.DateTimeField(required=False)
     class Meta:
         model  = Message
-        fields = ['sender','receiver' ,'message','id']
+        fields = ['sender','receiver' ,'message','id' , 'timestamp']
     
     def create(self, validated_data):
         msg =Message.objects.create(**validated_data)

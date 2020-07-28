@@ -11,6 +11,8 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.exceptions import APIException
 from kavenegar import *
 from random import randint
+import json
+import requests
 
 def index(request):
     user = request.user
@@ -18,6 +20,8 @@ def index(request):
         return redirect('chats')
     else:
         return redirect('login')
+
+
 
 @api_view(['POST'])
 @parser_classes([JSONParser])
@@ -33,7 +37,7 @@ def Messages(request):
     return JsonResponse(serializer.data, json_dumps_params={'ensure_ascii': False}, safe=False)
 
 
-import requests
+
 
 @api_view(['POST'])
 @parser_classes([JSONParser])
@@ -45,31 +49,60 @@ def message_view(request):
     serializer = MessageSerializer(data=data)
     if serializer.is_valid():
         serializer.save()
-        registration_token = request.data['reg_google']
+        receiver = serializer.data['sender']
+        receiver = User.objects.get(username = receiver )
+        registration_token = receiver.reg_google
         title=   serializer.data['sender']
         message =  serializer.data['message'] 
         url = "https://fcm.googleapis.com/fcm/send"
-        payload = "{\r\n    \"registration_ids\" : [\r\n       \"%s\" \r\n        \r\n    ],\r\n   \"data\" : {\r\n       \"title\" : \"%s\",\r\n       \"message\" : \"%s\" \r\n   }\r\n}"% (registration_token , title , message)
-        receiver = serializer.data['receiver']
-        receiver = User.objects.get(username = receiver)
-        receiver.reg_google = registration_token
-        receiver.save()
+        payload = "{\r\n    \"registration_ids\" : [\r\n       \"%s\" \r\n        \r\n    ],\r\n   \"data\" : {\r\n       \"title\" : \"%s\",\r\n       \"message\" : \"%s\"  , \r\n      \"type\" : \" 0 \"   }\r\n}"% (registration_token , title , message)
+
         headers = {
         'Authorization': 'key=AAAAY7xoWZ4:APA91bGLwcmRWkGc1zGClzHc83ER6KbfpH2D8d2ZB1hkoXGRcyrKK8SvxYW2AkQJvT-JfQEimTIJreNlD7_6rWN0VdXlMQjLdjD5d0gqODqW059cDQCrAybsHgVe6I5IL-n46Qzg-8HM',
         'Content-Type': 'application/json'
         }
         response = requests.request("POST", url, headers=headers, data = payload)
         response = response.text.encode('utf8')
-        import json
         response = json.loads(response)
         if response["success"] != 1:
             print(response)
             return JsonResponse({'error': response },safe=False)
         print('Successfully sent message:', response)
         data = serializer.data
-        data ['reg_google'] = registration_token
         return JsonResponse(data , status=201)
     return JsonResponse(serializer.errors, status=400)
+
+
+
+@api_view(['POST'])
+@parser_classes([JSONParser])
+def Seen(request):
+    data     = request.data 
+    id       = data['id']
+    msg      = Message.objects.get(id=id)
+    msg.seen = True
+    msg.save()
+    message = msg.message
+    title  = msg.sender.username
+    receiver = msg.receiver
+    registration_token = receiver.reg_google
+    url = "https://fcm.googleapis.com/fcm/send"
+    payload = "{\r\n    \"registration_ids\" : [\r\n       \"%s\" \r\n        \r\n    ],\r\n   \"data\" : {\r\n       \"title\" : \"%s\",\r\n       \"message\" : \"%s\"  , \r\n      \"type\" : \" 1 \"   }\r\n}"% (registration_token , title , message)
+
+    headers = {
+    'Authorization': 'key=AAAAY7xoWZ4:APA91bGLwcmRWkGc1zGClzHc83ER6KbfpH2D8d2ZB1hkoXGRcyrKK8SvxYW2AkQJvT-JfQEimTIJreNlD7_6rWN0VdXlMQjLdjD5d0gqODqW059cDQCrAybsHgVe6I5IL-n46Qzg-8HM',
+    'Content-Type': 'application/json'
+    }
+    response = requests.request("POST", url, headers=headers, data = payload)
+    response = response.text.encode('utf8')
+    response = json.loads(response)
+    if response["success"] != 1:
+        print(response)
+        return JsonResponse({'error': response },safe=False)
+    print('Successfully sent message:', response)
+    return JsonResponse({'success':True} , status=201)
+
+
 
 
 @api_view(['POST'])
@@ -113,6 +146,8 @@ def Login(request):
             return JsonResponse(serializer.data, status=201)
         return JsonResponse(serializer.errors, status=400)
 
+
+
 @api_view(['POST'])
 @parser_classes([JSONParser , MultiPartParser])
 def SetProfile(request):
@@ -127,6 +162,8 @@ def SetProfile(request):
     user.save()
     #return render(request,'messageform.html',{'image':image})
     return JsonResponse({'success':True})
+
+
 
 @api_view(['POST'])
 @parser_classes([JSONParser])
@@ -160,7 +197,7 @@ def Set_Read(request):
         m = msg
         id = messages[m]
         message = Message.objects.get(id=id)
-        message.is_read = True
+        message.seen = True
         message.save()
     return JsonResponse({'success':True})
 
