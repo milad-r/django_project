@@ -5,19 +5,19 @@ class MessageSerializer(serializers.ModelSerializer):
     timestamp = serializers.DateTimeField(required=False)
     class Meta:
         model  = Message
-        fields = ['sender','receiver' ,'message','id' , 'timestamp']
-    
+        fields = ['sender','receiver' ,'message','id' , 'timestamp','seen']
+
     def create(self, validated_data):
         msg =Message.objects.create(**validated_data)
         return msg
-     
+
 
 class UserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=False)
     class Meta:
         model = User
-        fields = ['username','phone_number']
-    
+        fields = ['username','phone_number','profile_image']
+
     def create(self, validated_data):
         return User.objects.create(**validated_data)
 
