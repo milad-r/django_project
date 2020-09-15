@@ -169,10 +169,9 @@ def SetProfile(request):
 @parser_classes([JSONParser])
 def users(request):
     user = request.data['username']
-    #user = 'ali'
     users = User.objects.exclude(username=user)
     serializer = UserSerializer(users, many=True ,)
-    #return render(request , 'users.html',{'users':serializer.data})
+    # return render(request , 'users.html',{'users':serializer.data})
     return JsonResponse(serializer.data , safe=False)
 
 
