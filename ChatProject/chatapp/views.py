@@ -122,7 +122,7 @@ def Register(request):
         # print(response)
         try :
             user = User.objects.get(phone_number=data['phone_number'])
-            return JsonResponse({'token':token ,'number':data['phone_number'],'username':user.username})
+            return JsonResponse({'token':token ,'number':data['phone_number'],'username':user.username , 'profile_image':user.profile_image })
         except User.DoesNotExist:
             return JsonResponse({'token':token ,'number':data['phone_number']})
     except APIException as e:
@@ -165,12 +165,14 @@ def SetProfile(request):
 
 
 
-@api_view(['POST'])
+@api_view(['GET','POST'])
 @parser_classes([JSONParser])
 def users(request):
     user = request.data['username']
+    #user = 'ali'
     users = User.objects.exclude(username=user)
     serializer = UserSerializer(users, many=True ,)
+    #return render(request , 'users.html',{'users':serializer.data})
     return JsonResponse(serializer.data , safe=False)
 
 
