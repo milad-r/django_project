@@ -122,7 +122,7 @@ def Register(request):
         # print(response)
         try :
             user = User.objects.get(phone_number=data['phone_number'])
-            return JsonResponse({'token':token ,'number':data['phone_number'],'username':user.username , 'profile_image':user.profile_image })
+            return JsonResponse({'token':token ,'number':data['phone_number'],'username':user.username , 'profile_image':str(user.profile_image) })
         except User.DoesNotExist:
             return JsonResponse({'token':token ,'number':data['phone_number']})
     except APIException as e:
